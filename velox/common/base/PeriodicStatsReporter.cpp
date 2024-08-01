@@ -63,7 +63,13 @@ PeriodicStatsReporter::PeriodicStatsReporter(const Options& options)
       cache_(options.cache),
       arbitrator_(options.arbitrator),
       spillMemoryPool_(options.spillMemoryPool),
-      options_(options) {}
+      options_(options) {
+#ifdef VELOX_ENABLE_S3
+  if (options.s3Metrics) {
+    addS3MetricsAggregatorTask(options.s3Metrics, options.s3MetricsIntervalMs);
+  }
+#endif
+}
 
 void PeriodicStatsReporter::start() {
   LOG(INFO) << "Starting PeriodicStatsReporter with options "
@@ -254,6 +260,97 @@ void PeriodicStatsReporter::reportSpillStats() {
             << velox::succinctBytes(spillMemoryStats.peakBytes) << "]";
   RECORD_METRIC_VALUE(kMetricSpillMemoryBytes, spillMemoryStats.usedBytes);
   RECORD_METRIC_VALUE(kMetricSpillPeakMemoryBytes, spillMemoryStats.peakBytes);
+}
+
+void PeriodicStatsReporter::addS3MetricsAggregatorTask(
+    const std::shared_ptr<velox::filesystems::S3MetricsAggregator>& s3Metrics,
+    uint64_t intervalMs) {
+  addTask(
+      "report_s3_metrics",
+      [s3Metrics]() {
+        auto aggregator =
+            velox::filesystems::S3MetricsAggregator::getInstance();
+
+        LOG(INFO) << "Updating S3 metrics: "
+                  << "ActiveConnections="
+                  << aggregator->getMetric(
+                         velox::filesystems::kMetricS3ActiveConnections)
+                  << ", "
+                  << "StartedUploads="
+                  << aggregator->getMetric(
+                         velox::filesystems::kMetricS3StartedUploads)
+                  << ", "
+                  << "FailedUploads="
+                  << aggregator->getMetric(
+                         velox::filesystems::kMetricS3FailedUploads)
+                  << ", "
+                  << "SuccessfulUploads="
+                  << aggregator->getMetric(
+                         velox::filesystems::kMetricS3SuccessfulUploads);
+
+        // Record the metrics
+        RECORD_METRIC_VALUE(
+            velox::filesystems::kMetricS3ActiveConnections,
+            aggregator->getMetric(
+                velox::filesystems::kMetricS3ActiveConnections));
+        RECORD_METRIC_VALUE(
+            velox::filesystems::kMetricS3StartedUploads,
+            aggregator->getMetric(velox::filesystems::kMetricS3StartedUploads));
+        RECORD_METRIC_VALUE(
+            velox::filesystems::kMetricS3FailedUploads,
+            aggregator->getMetric(velox::filesystems::kMetricS3FailedUploads));
+        RECORD_METRIC_VALUE(
+            velox::filesystems::kMetricS3SuccessfulUploads,
+            aggregator->getMetric(
+                velox::filesystems::kMetricS3SuccessfulUploads));
+        RECORD_METRIC_VALUE(
+            velox::filesystems::kMetricS3MetadataCalls,
+            aggregator->getMetric(velox::filesystems::kMetricS3MetadataCalls));
+        RECORD_METRIC_VALUE(
+            velox::filesystems::kMetricS3ListStatusCalls,
+            aggregator->getMetric(
+                velox::filesystems::kMetricS3ListStatusCalls));
+        RECORD_METRIC_VALUE(
+            velox::filesystems::kMetricS3ListLocatedStatusCalls,
+            aggregator->getMetric(
+                velox::filesystems::kMetricS3ListLocatedStatusCalls));
+        RECORD_METRIC_VALUE(
+            velox::filesystems::kMetricS3ListObjectsCalls,
+            aggregator->getMetric(
+                velox::filesystems::kMetricS3ListObjectsCalls));
+        RECORD_METRIC_VALUE(
+            velox::filesystems::kMetricS3OtherReadErrors,
+            aggregator->getMetric(
+                velox::filesystems::kMetricS3OtherReadErrors));
+        RECORD_METRIC_VALUE(
+            velox::filesystems::kMetricS3AwsAbortedExceptions,
+            aggregator->getMetric(
+                velox::filesystems::kMetricS3AwsAbortedExceptions));
+        RECORD_METRIC_VALUE(
+            velox::filesystems::kMetricS3SocketExceptions,
+            aggregator->getMetric(
+                velox::filesystems::kMetricS3SocketExceptions));
+        RECORD_METRIC_VALUE(
+            velox::filesystems::kMetricS3GetObjectErrors,
+            aggregator->getMetric(
+                velox::filesystems::kMetricS3GetObjectErrors));
+        RECORD_METRIC_VALUE(
+            velox::filesystems::kMetricS3GetMetadataErrors,
+            aggregator->getMetric(
+                velox::filesystems::kMetricS3GetMetadataErrors));
+        RECORD_METRIC_VALUE(
+            velox::filesystems::kMetricS3GetObjectRetries,
+            aggregator->getMetric(
+                velox::filesystems::kMetricS3GetObjectRetries));
+        RECORD_METRIC_VALUE(
+            velox::filesystems::kMetricS3GetMetadataRetries,
+            aggregator->getMetric(
+                velox::filesystems::kMetricS3GetMetadataRetries));
+        RECORD_METRIC_VALUE(
+            velox::filesystems::kMetricS3ReadRetries,
+            aggregator->getMetric(velox::filesystems::kMetricS3ReadRetries));
+      },
+      intervalMs);
 }
 
 } // namespace facebook::velox

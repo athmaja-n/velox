@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Test executable for S3 file system operations
 add_executable(velox_s3file_test S3FileSystemTest.cpp S3UtilTest.cpp)
 add_test(velox_s3file_test velox_s3file_test)
 target_link_libraries(
@@ -23,9 +24,10 @@ target_link_libraries(
   velox_exec_test_lib
   velox_dwio_common_exception
   velox_exec
-  gtest
-  gtest_main)
+  GTest::gtest
+  GTest::gtest_main)
 
+# Test executable for S3 file system registration
 add_executable(velox_s3registration_test S3FileSystemRegistrationTest.cpp)
 add_test(velox_s3registration_test velox_s3registration_test)
 target_link_libraries(
@@ -37,9 +39,10 @@ target_link_libraries(
   velox_exec_test_lib
   velox_dwio_common_exception
   velox_exec
-  gtest
-  gtest_main)
+  GTest::gtest
+  GTest::gtest_main)
 
+# Test executable for S3 file system finalization
 add_executable(velox_s3finalize_test S3FileSystemFinalizeTest.cpp)
 add_test(velox_s3finalize_test velox_s3finalize_test)
 target_link_libraries(
@@ -48,9 +51,10 @@ target_link_libraries(
   velox_hive_config
   velox_file
   velox_core
-  gtest
-  gtest_main)
+  GTest::gtest
+  GTest::gtest_main)
 
+# Test executable for S3 insert operations
 add_executable(velox_s3insert_test S3InsertTest.cpp)
 add_test(velox_s3insert_test velox_s3insert_test)
 target_link_libraries(
@@ -62,9 +66,10 @@ target_link_libraries(
   velox_exec_test_lib
   velox_dwio_common_exception
   velox_exec
-  gtest
-  gtest_main)
+  GTest::gtest
+  GTest::gtest_main)
 
+# Test executable for S3 read operations
 add_executable(velox_s3read_test S3ReadTest.cpp)
 add_test(
   NAME velox_s3read_test
@@ -79,9 +84,10 @@ target_link_libraries(
   velox_exec_test_lib
   velox_dwio_common_exception
   velox_exec
-  gtest
-  gtest_main)
+  GTest::gtest
+  GTest::gtest_main)
 
+# Test executable for S3 multiple endpoints
 add_executable(velox_s3multiendpoints_test S3MultipleEndpointsTest.cpp)
 add_test(velox_s3multiendpoints_test velox_s3multiendpoints_test)
 target_link_libraries(
@@ -93,5 +99,21 @@ target_link_libraries(
   velox_exec_test_lib
   velox_dwio_common_exception
   velox_exec
-  gtest
-  gtest_main)
+  GTest::gtest
+  GTest::gtest_main)
+
+# Test executable for S3 metrics aggregator
+add_executable(velox_s3metrics_aggregator_test S3MetricsAggregatorTest.cpp)
+add_test(velox_s3metrics_aggregator_test velox_s3metrics_aggregator_test)
+target_link_libraries(
+  velox_s3metrics_aggregator_test
+  velox_file
+  velox_s3fs
+  velox_s3_metrics_aggregator
+  velox_hive_config
+  velox_core
+  velox_exec_test_lib
+  velox_dwio_common_exception
+  velox_exec
+  GTest::gtest
+  GTest::gtest_main)
